@@ -7,6 +7,8 @@
 #include <sstream>
 #include <list>
 #include <utility>
+#include <unistd.h>
+#include <sys/stat.h>
 
 
 using namespace std;
@@ -26,49 +28,54 @@ private:
     int rank;
 
 public:
-    TeamValue(string n, int v) : name(n), value(v), rank(NULL) {}
+    TeamValue(string n, int v) : name(n), value(v), rank(0) {}
 
-    string GetName() {
+    string getName() {
         return name;
     }
 
-    void SetName(string n) {
+    void setName(string n) {
         name = n;
     }
 
-    int GetValue() {
+    int getValue() {
         return value;
     }
 
-    void SetValue(int v) {
+    void setValue(int v) {
         value = v;
     }
 
-    int GetRank() {
+    int getRank() {
         return rank;
     }
 
-    void SetRank(int r) {
+    void setRank(int r) {
         rank = r;
     }
 
 };
 
 struct MatchPointComparator {
-    bool operator ()(TeamValue tv1, TeamValue tv2)
-    {
-        if(tv1.GetValue() == tv2.GetValue())
-            return tv1.GetName() < tv2.GetName();
-        return tv1.GetValue() > tv2.GetValue();
+    bool operator()(TeamValue tv1, TeamValue tv2) {
+        if (tv1.getValue() == tv2.getValue())
+            return tv1.getName() < tv2.getName();
+        return tv1.getValue() > tv2.getValue();
 
     }
 };
 
-bool booleanFromString(string s) {
+int booleanFromString(string s) {
 
     transform(s.begin(), s.end(), s.begin(), ::tolower);
 
-    return s == "y" || s == "yes";
+    if (s == "y" || s == "yes" || s == "c") {
+        return 1;
+    } else if (s == "n" || s == "no" || s == "e" || s == "exit") {
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 list<TeamValue> vectorToList(vector<TeamValue> vector) {
@@ -81,7 +88,12 @@ list<TeamValue> vectorToList(vector<TeamValue> vector) {
     return list;
 }
 
-void setTeamRanks(list<TeamValue>& sortedTeamValues) {
+bool fileExists(const string &name) {
+    struct stat buffer;
+    return (stat(name.c_str(), &buffer) == 0);
+}
+
+void setTeamRanks(list<TeamValue> &sortedTeamValues) {
 
     int index = 1;
     int rank = 0;
@@ -89,13 +101,13 @@ void setTeamRanks(list<TeamValue>& sortedTeamValues) {
 
     for (TeamValue &team : sortedTeamValues) {
 
-        int points = team.GetValue();
+        int points = team.getValue();
 
         if (points != previousTeamPoints) {
             rank++;
         }
 
-        team.SetRank(rank);
+        team.setRank(rank);
 
         if (points == previousTeamPoints) {
             rank = index;
@@ -129,11 +141,8 @@ TeamValue getTeamResultFromString(const string &s, const string &pattern) {
 vector<TeamValue> convertTeamValueMapToList(map<string, int> teamValuesMap) {
     vector<TeamValue> list;
 
-    auto it = teamValuesMap.begin();
-
-    while (it != teamValuesMap.end()) {
-        TeamValue team = TeamValue(it->first, it->second);
-
+    for (auto &tv : teamValuesMap) {
+        TeamValue team = TeamValue(tv.first, tv.second);
         list.push_back(team);
     }
 
@@ -147,23 +156,23 @@ vector<TeamValue> calculateMatchPoints(const vector<TeamValue> &matchResults) {
     TeamValue teamA = matchResults[0];
     TeamValue teamB = matchResults[1];
 
-    string teamAName = teamA.GetName();
-    int teamAGoals = teamA.GetValue();
+    string teamAName = teamA.getName();
+    int teamAGoals = teamA.getValue();
     TeamValue teamAPoints = TeamValue(teamAName, 0);
 
-    string teamBName = teamB.GetName();
-    int teamBGoals = teamB.GetValue();
+    string teamBName = teamB.getName();
+    int teamBGoals = teamB.getValue();
     TeamValue teamBPoints = TeamValue(teamBName, 0);
 
     if (teamAGoals == teamBGoals) {
 
-        teamAPoints.SetValue(1);
-        teamBPoints.SetValue(1);
+        teamAPoints.setValue(1);
+        teamBPoints.setValue(1);
 
     } else if (teamAGoals > teamBGoals) {
-        teamAPoints.SetValue(3);
+        teamAPoints.setValue(3);
     } else {
-        teamBPoints.SetValue(3);
+        teamBPoints.setValue(3);
     }
 
     matchPoints.push_back(teamAPoints);
@@ -177,16 +186,10 @@ vector<TeamValue> reduceTeamMatchPoints(const vector<TeamValue> allTeamMatchPoin
 
     for (TeamValue matchPoints : allTeamMatchPoints) {
 
-        string name = matchPoints.GetName();
-        int points = matchPoints.GetValue();
+        string name = matchPoints.getName();
+        int points = matchPoints.getValue();
 
-        if (finalTeamPoints.find(name) == finalTeamPoints.end()) {
-            finalTeamPoints.insert(pair<std::string, int>(name, points));
-        } else {
-            int nextPointsTotal = finalTeamPoints.find(name)->second + points;
-
-            finalTeamPoints.insert(pair<string, int>(name, nextPointsTotal));
-        }
+        finalTeamPoints[name] += points;
     }
 
     return convertTeamValueMapToList(finalTeamPoints);
@@ -211,7 +214,6 @@ list<TeamValue> getOrderedMatchPointsFromFile(const string file) {
     string line;
 
     while (getline(infile, line)) {
-        cout << line << "\n";
 
         vector<TeamValue> scores;
         vector<string> matchResults = splitResultsLineIntoVector(line, ", ");
@@ -237,12 +239,91 @@ list<TeamValue> getOrderedMatchPointsFromFile(const string file) {
     return teamMatchPointsList;
 }
 
+class Print {
+
+private:
+    int initialDelay;
+    int runningDelay;
+
+public:
+    explicit Print(int timeout) : initialDelay(timeout), runningDelay(timeout) {}
+
+    void delayed(string s) {
+        usleep(runningDelay);
+        cout << s << '\n';
+        runningDelay += initialDelay;
+    }
+
+    void ln(string s) {
+        cout << s << '\n';
+    }
+
+    void reset(int n = 0) {
+        runningDelay = n;
+    }
+};
+
 int main() {
 
-    string file_path = "/Users/danielmaartens/personal/span/span_challenge_cpp/input.csv";
+    bool running = true;
+    string file;
+    string userInput;
+    int answerYes;
+    Print print = Print(600000);
 
-    list<TeamValue> matchPoints = getOrderedMatchPointsFromFile(file_path);
+    print.ln("\nWelcome to the League Rank Calculator !\n");
+    print.delayed("This program will calculate the ranking table for a soccer league.\n");
+    print.delayed("The data for the results of the games should be stored in a text file.");
 
+    while (running) {
+        print.delayed("\nPlease provide the full path of the file where your results are stored:\n");
+        print.reset(0);
+
+        cin >> file;
+        cin.get();
+
+        if (fileExists(file)) {
+
+            list<TeamValue> matchPoints = getOrderedMatchPointsFromFile(file);
+
+            print.ln("\nRESULTS\n");
+
+            for (TeamValue team : matchPoints) {
+                string result = to_string(team.getRank()) + ". " + team.getName() + ", " + to_string(team.getValue()) +
+                                (team.getValue() == 1 ? " pt" : " pts");
+                print.ln(result);
+            }
+
+            print.ln("\nWould you like to check match point results of another league ? [y/n]: ");
+
+            cin >> userInput;
+            cin.get();
+
+            answerYes = booleanFromString(userInput);
+
+            while (answerYes == -1) {
+                print.ln("\nI do not understand your command, please try again...");
+                print.ln("Would you like to check match point results of another league ? [y/n]: ");
+
+                cin >> userInput;
+                cin.get();
+
+                answerYes = booleanFromString(userInput);
+            }
+
+            running = answerYes;
+        } else {
+            print.ln("\nSorry, your file does not exist ! Please double-check your file path and try again... Or press [e] to exit or [c] to continue...\n");
+
+            cin >> userInput;
+            cin.get();
+
+            running = booleanFromString(userInput);
+        }
+    }
+
+    print.ln("\nThank you for using the League Rank Calculator !");
     return 0;
+
 }
 
