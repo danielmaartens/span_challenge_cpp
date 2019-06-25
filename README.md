@@ -2,7 +2,7 @@
 
 ### League Rank Calculator
 
-This is a command-line application written in C++ that will calculate the ranking table for a
+This is a command-line application written in `C++` that will calculate the ranking table for a
 soccer league.
 
 ### Requirements
