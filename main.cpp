@@ -71,7 +71,7 @@ int booleanFromString(string s) {
 
     if (s == "y" || s == "yes" || s == "c") {
         return 1;
-    } else if (s == "n" || s == "no" || s == "e" || s == "exit") {
+    } else if (s == "n" || s == "no") {
         return 0;
     } else {
         return -1;
@@ -313,12 +313,17 @@ int main() {
 
             running = answerYes;
         } else {
-            print.ln("\nSorry, your file does not exist ! Please double-check your file path and try again... Or press [e] to exit or [c] to continue...\n");
+            print.ln("\nSorry, your file does not exist ! Please double-check your file path and try again... Press [c] to continue, or any other key (besides ENTER) to exit...\n");
 
             cin >> userInput;
             cin.get();
 
             running = booleanFromString(userInput);
+
+            if (running == -1) {
+                running = false;
+            }
+
         }
     }
 
