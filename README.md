@@ -29,7 +29,7 @@ Lions 4, Grouches 0
 ### Run
 A script has been provided that automatically compiles `main.cpp` and runs the output file.
 
-All you have to do is run the following from the project `root` :
+Besides making sure you have `g++` installed, all you have to do is run the following from the project `root` :
 
 ```
 sh run.sh
