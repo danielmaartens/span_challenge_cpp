@@ -179,7 +179,7 @@ TeamValue getTeamResultFromString(const string &s, const string &pattern) {
 }
 
 /**
- * Convert a map object to a list for processing of data later.
+ * Convert a map object to a list for easier processing of data later.
  * @param teamValuesMap
  * @return
  */
@@ -196,7 +196,7 @@ vector <TeamValue> convertTeamValueMapToList(map<string, int> teamValuesMap) {
 
 /**
  * Processes a vector of the two team scores in a single match
- * and returns a new TeamValue object where the value parameter
+ * and returns a new TeamValue object for each team where the value parameter
  * represents the points the team received from either Losing/Winning/Drawing the match.
  *
  * @param matchResults
@@ -206,11 +206,11 @@ vector <TeamValue> calculateMatchPoints(const vector <TeamValue> &matchResults) 
 
     vector <TeamValue> matchPoints;
 
-    TeamValue teamA = matchResults[0];
-    TeamValue teamB = matchResults[1];
-
     // Initialise new TeamValue objects for each team
     // setting initial points to 0
+
+    TeamValue teamA = matchResults[0];
+    TeamValue teamB = matchResults[1];
 
     string teamAName = teamA.getName();
     int teamAGoals = teamA.getValue();
@@ -246,7 +246,7 @@ vector <TeamValue> calculateMatchPoints(const vector <TeamValue> &matchResults) 
  * When this function is called we have a vector
  * containing each team's match points for all games played.
  *
- * Here we want to reduced that vector to one that only has
+ * We want to reduced that vector to one that only has
  * one entry for each team, with each new object having it's
  * value represent the sum of all match points gained in the league.
  *
@@ -255,7 +255,7 @@ vector <TeamValue> calculateMatchPoints(const vector <TeamValue> &matchResults) 
  */
 vector <TeamValue> reduceTeamMatchPoints(const vector <TeamValue> allTeamMatchPoints) {
 
-    // Usage of a map here makes it easier to reduce into single entries per team.
+    // Using a map here makes it easier to reduce into a single entry per team.
     map<string, int> finalTeamPoints;
 
     for (TeamValue matchPoints : allTeamMatchPoints) {
@@ -282,8 +282,8 @@ vector <TeamValue> reduceTeamMatchPoints(const vector <TeamValue> allTeamMatchPo
  * @param delimiter
  * @return
  */
-vector<string> splitResultsLineIntoVector(string resultLine, const string delimiter) {
-    vector<string> result;
+vector <string> splitResultsLineIntoVector(string resultLine, const string delimiter) {
+    vector <string> result;
     size_t pos = resultLine.find(delimiter);
     string token = resultLine.substr(0, pos);
     result.push_back(token);
@@ -297,7 +297,7 @@ vector<string> splitResultsLineIntoVector(string resultLine, const string delimi
  * This is the most important function.
  * It serves as the parent for most of the other functions within this module.
  * It is responsible for reading through the file contents line by line and
- * processing the final results of the league based on all the matches played.
+ * processing the final ranks of teams in the league based on all the matches played.
  *
  * @param file
  * @return
@@ -332,7 +332,7 @@ list <TeamValue> getLeagueResults(const string file) {
         }
 
         // Now that we have a vector of TeamValue objects for the match representing each team,
-        // We can calculate the match points.
+        // we can calculate the match points.
         vector <TeamValue> matchPoints = calculateMatchPoints(scores);
 
         // Here we concatenate the new matchPoints vector with all previous added matchPoints.
@@ -342,33 +342,36 @@ list <TeamValue> getLeagueResults(const string file) {
 
     }
 
-    // Now we reduce this vector of all our teams' matchPoints into a vector
-    // containing a single entry for each team with the value representing the sum of all their match points gained.
+    // Now we reduce this vector of all our teams' matchPoints
+    // into a vector containing a single entry for each team
+    // with the value representing the sum of all their match points gained.
     finalTeamMatchPoints = reduceTeamMatchPoints(allTeamMatchPoints);
 
     // Convert our finalTeamMatchPoints vector to a list so that we can
     // easily sort our data with a custom Comparator.
-    list <TeamValue> teamMatchPointsList = vectorToList(finalTeamMatchPoints);
+    list <TeamValue> finalTeamMatchPointsList = vectorToList(finalTeamMatchPoints);
 
-    // Sort by points DESC, and then by name ASC.
-    teamMatchPointsList.sort(MatchPointComparator());
+    // Sort finalTeamMatchPoints by points DESC, and then by name ASC.
+    finalTeamMatchPointsList.sort(MatchPointComparator());
 
     // Set the team ranks on the sorted data.
-    setTeamRanks(teamMatchPointsList);
+    setTeamRanks(finalTeamMatchPointsList);
 
     return teamMatchPointsList;
 }
 
 
 /**
- * This Print class serves as an easy more DRY way
+ * This Print class serves as a DRY way
  * of delaying output to the console.
  *
  * In the beginning we want to simulate the console talking to you
  * and giving you enough time to read the messages.
  *
  * This class serves to make the process of accomplishing that
- * much more easily.
+ * in a more flowing and succinct manner when a situation arises
+ * where you may have multiple outputs to the console in sequence
+ * which you do not want to display all at once.
  *
  * The class is instantiated with an initialDelay.
  * Once the print.delayed() function is invoked the initialDelay will be added to the current runningDelay.
@@ -417,7 +420,8 @@ int main() {
     print.delayed("The data for the results of the games should be stored in a text file.");
 
     while (running) {
-        print.delayed("\nPlease provide the full path of the file where your results are stored:\n\nFull File Path To Data: ");
+        print.delayed(
+                "\nPlease provide the full path of the file where your results are stored:\n\nFull File Path To Data: ");
         print.reset(0);
 
         cin >> file; // read in user input and store it in the file variable
@@ -430,8 +434,9 @@ int main() {
             // process the file contents and get the league results
             list <TeamValue> matchPoints = getLeagueResults(file);
 
-            print.ln("\nRESULTS\n");
+            print.ln("\nLEAGUE RANK RESULTS\n");
 
+            // Print out the ranks in a format specified in the challenge.
             for (TeamValue team : matchPoints) {
                 string result =
                         to_string(team.getRank()) + ". " + team.getName() + ", " + to_string(team.getValue()) +
