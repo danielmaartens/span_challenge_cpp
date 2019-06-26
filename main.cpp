@@ -72,7 +72,7 @@ struct MatchPointComparator {
 
 /**
  * Converts a vector to a list.
- * This is useful because lists can be easiler sorted through
+ * This is useful because lists can be easily sorted through
  * by using Comparator classes.
  *
  * @param vector
