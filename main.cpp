@@ -13,7 +13,7 @@
 
 using namespace std;
 
-string TEAM_RESULT_GROUPING_PATTERN = "^([a-zA-Z\\s]+)([0-9]+$)";
+static string TEAM_RESULT_GROUPING_PATTERN = "^([a-zA-Z\\s]+)([0-9]+$)";
 
 struct teamValue {
     string name;
@@ -56,6 +56,11 @@ public:
 
 };
 
+/**
+ * This is a struct with a single operator function.
+ * it is a Comparator that serves as a sorting tool for our data later,
+ * where it would "compare" our TeamValue data first by value and if that is equal then by name.
+ */
 struct MatchPointComparator {
     bool operator()(TeamValue tv1, TeamValue tv2) {
         if (tv1.getValue() == tv2.getValue())
@@ -73,8 +78,8 @@ struct MatchPointComparator {
  * @param vector
  * @return
  */
-list<TeamValue> vectorToList(vector<TeamValue> vector) {
-    list<TeamValue> list;
+list <TeamValue> vectorToList(vector <TeamValue> vector) {
+    list <TeamValue> list;
 
     for (TeamValue v : vector) {
         list.push_back(v);
@@ -116,29 +121,29 @@ bool fileExists(const string &name) {
  * Note: the list must be sorted.
  * @param sortedTeamValues
  */
-void setTeamRanks(list<TeamValue> &sortedTeamValues) {
+void setTeamRanks(list <TeamValue> &sortedTeamValues) {
 
     int index = 1;
-    int rank = 0;
-    int previousTeamPoints = -1;
+    int rank;
+    int previousTeamPoints;
 
     for (TeamValue &team : sortedTeamValues) {
 
         int points = team.getValue();
 
+        // Only change rank to running index if current points and previous points are different
+        // This is to make sure that teams who have the same points have the same rank.
         if (points != previousTeamPoints) {
-            rank++;
+            rank = index;
         }
 
         team.setRank(rank);
 
-        if (points == previousTeamPoints) {
-            rank = index;
-        }
-
+        // Set previous points to current points for next iteration check.
         previousTeamPoints = points;
         index++;
     }
+
 }
 
 /**
@@ -178,13 +183,16 @@ TeamValue getTeamResultFromString(const string &s, const string &pattern) {
  * @param teamValuesMap
  * @return
  */
-vector<TeamValue> convertTeamValueMapToList(map<string, int> teamValuesMap) {
-    vector<TeamValue> list;
+vector <TeamValue> convertTeamValueMapToList(map<string, int> teamValuesMap) {
+    vector <TeamValue> list;
 
     for (auto &tv : teamValuesMap) {
         TeamValue team = TeamValue(tv.first, tv.second);
         list.push_back(team);
     }
+
+    return list;
+}
 
 /**
  * Processes a vector of the two team scores in a single match
@@ -194,9 +202,9 @@ vector<TeamValue> convertTeamValueMapToList(map<string, int> teamValuesMap) {
  * @param matchResults
  * @return
  */
-vector<TeamValue> calculateMatchPoints(const vector<TeamValue> &matchResults) {
+vector <TeamValue> calculateMatchPoints(const vector <TeamValue> &matchResults) {
 
-    vector<TeamValue> matchPoints;
+    vector <TeamValue> matchPoints;
 
     TeamValue teamA = matchResults[0];
     TeamValue teamB = matchResults[1];
@@ -218,11 +226,11 @@ vector<TeamValue> calculateMatchPoints(const vector<TeamValue> &matchResults) {
         teamAPoints.setValue(1);
         teamBPoints.setValue(1);
 
-    // Team A WON
+        // Team A WON
     } else if (teamAGoals > teamBGoals) {
         teamAPoints.setValue(3);
 
-    // Team B WON
+        // Team B WON
     } else {
         teamBPoints.setValue(3);
     }
@@ -245,7 +253,7 @@ vector<TeamValue> calculateMatchPoints(const vector<TeamValue> &matchResults) {
  * @param allTeamMatchPoints
  * @return
  */
-vector<TeamValue> reduceTeamMatchPoints(const vector<TeamValue> allTeamMatchPoints) {
+vector <TeamValue> reduceTeamMatchPoints(const vector <TeamValue> allTeamMatchPoints) {
 
     // Usage of a map here makes it easier to reduce into single entries per team.
     map<string, int> finalTeamPoints;
@@ -264,6 +272,26 @@ vector<TeamValue> reduceTeamMatchPoints(const vector<TeamValue> allTeamMatchPoin
     return convertTeamValueMapToList(finalTeamPoints);
 }
 
+/**
+ * C++ does not have a readily available function that can easily split strings into vectors.
+ * Since our eventual output will be a vector of size 2 (vector of the 2 teams' results in a game)
+ * and we know that the delimiter we are splitting by is pre-defined
+ * we are only concerned with splitting the string once with the specified delimiter, and not everywhere it may occur.
+ *
+ * @param resultLine
+ * @param delimiter
+ * @return
+ */
+vector<string> splitResultsLineIntoVector(string resultLine, const string delimiter) {
+    vector<string> result;
+    size_t pos = resultLine.find(delimiter);
+    string token = resultLine.substr(0, pos);
+    result.push_back(token);
+    resultLine.erase(0, pos + delimiter.length());
+    result.push_back(resultLine);
+
+    return result;
+}
 
 /**
  * This is the most important function.
@@ -274,9 +302,9 @@ vector<TeamValue> reduceTeamMatchPoints(const vector<TeamValue> allTeamMatchPoin
  * @param file
  * @return
  */
-list<TeamValue> getLeagueResults(const string file) {
-    vector<TeamValue> allTeamMatchPoints;
-    vector<TeamValue> finalTeamMatchPoints;
+list <TeamValue> getLeagueResults(const string file) {
+    vector <TeamValue> allTeamMatchPoints;
+    vector <TeamValue> finalTeamMatchPoints;
 
     // read file contents
     ifstream infile(file);
@@ -285,13 +313,13 @@ list<TeamValue> getLeagueResults(const string file) {
     // go through each line of the file
     while (getline(infile, line)) {
 
-        vector<TeamValue> scores;
+        vector <TeamValue> scores;
 
         // Each line represents the outcome of a match.
         // Each team's own outcome of the match is separated by a ", "
         // which is why we first split the line by ", " to get a matchResults vector
         // of two strings representing the outcome of each team for the match.
-        vector<string> matchResults = splitResultsLineIntoVector(line, ", ");
+        vector <string> matchResults = splitResultsLineIntoVector(line, ", ");
 
         // Now we loop through the matchResults
         for (string result : matchResults) {
@@ -305,7 +333,7 @@ list<TeamValue> getLeagueResults(const string file) {
 
         // Now that we have a vector of TeamValue objects for the match representing each team,
         // We can calculate the match points.
-        vector<TeamValue> matchPoints = calculateMatchPoints(scores);
+        vector <TeamValue> matchPoints = calculateMatchPoints(scores);
 
         // Here we concatenate the new matchPoints vector with all previous added matchPoints.
         // The purpose of this is to have a vector of TeamValue objects each representing
@@ -320,7 +348,7 @@ list<TeamValue> getLeagueResults(const string file) {
 
     // Convert our finalTeamMatchPoints vector to a list so that we can
     // easily sort our data with a custom Comparator.
-    list<TeamValue> teamMatchPointsList = vectorToList(finalTeamMatchPoints);
+    list <TeamValue> teamMatchPointsList = vectorToList(finalTeamMatchPoints);
 
     // Sort by points DESC, and then by name ASC.
     teamMatchPointsList.sort(MatchPointComparator());
@@ -361,6 +389,9 @@ public:
     void delayed(string s) {
         usleep(runningDelay);
         cout << s << '\n';
+
+        // runningDelay is incremented by initialDelay value
+        // so that next delayed print can occur timeously after this one by an initialDelay.
         runningDelay += initialDelay;
     }
 
@@ -379,14 +410,14 @@ int main() {
     string file;
     string userInput;
     int answerYes;
-    Print print = Print(600000);
+    Print print = Print(900000);
 
     print.ln("\nWelcome to the League Rank Calculator !\n");
     print.delayed("This program will calculate the ranking table for a soccer league.\n");
     print.delayed("The data for the results of the games should be stored in a text file.");
 
     while (running) {
-        print.delayed("\nPlease provide the full path of the file where your results are stored:\n");
+        print.delayed("\nPlease provide the full path of the file where your results are stored:\n\nFull File Path To Data: ");
         print.reset(0);
 
         cin >> file; // read in user input and store it in the file variable
@@ -397,13 +428,14 @@ int main() {
 
             // It does so let's start processing
             // process the file contents and get the league results
-            list<TeamValue> matchPoints = getLeagueResults(file);
+            list <TeamValue> matchPoints = getLeagueResults(file);
 
             print.ln("\nRESULTS\n");
 
             for (TeamValue team : matchPoints) {
-                string result = to_string(team.getRank()) + ". " + team.getName() + ", " + to_string(team.getValue()) +
-                                (team.getValue() == 1 ? " pt" : " pts");
+                string result =
+                        to_string(team.getRank()) + ". " + team.getName() + ", " + to_string(team.getValue()) +
+                        (team.getValue() == 1 ? " pt" : " pts");
                 print.ln(result);
             }
 
@@ -428,16 +460,14 @@ int main() {
 
             running = answerYes;
         } else {
-            print.ln("\nSorry, your file does not exist ! Please double-check your file path and try again... Press [c] to continue, or any other key (besides ENTER) to exit...\n");
+            print.ln(
+                    "\nSorry, your file does not exist ! Please double-check your file path and try again... Press [c] to continue, or any other key (besides ENTER) to exit...\n");
 
             cin >> userInput;
             cin.get();
 
-            running = booleanFromString(userInput);
-
-            if (running == -1) {
-                running = false;
-            }
+            // ignore checks for unspecified strings that come back as -1 and default them to false as well.
+            running = booleanFromString(userInput) == 1;
 
         }
     }
