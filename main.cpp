@@ -90,6 +90,7 @@ list <TeamValue> vectorToList(vector <TeamValue> vector) {
 
 /**
  * Converts expected user input for yes/no/continue questions into a boolean value.
+ *
  * @param s
  * @return
  */
@@ -108,6 +109,7 @@ int booleanFromString(string s) {
 
 /**
  * Checks if the file inputted by the user is valid/exists
+ *
  * @param name
  * @return
  */
@@ -119,6 +121,7 @@ bool fileExists(const string &name) {
 /**
  * Sets the rank value for all teams.
  * Note: the list must be sorted.
+ *
  * @param sortedTeamValues
  */
 void setTeamRanks(list <TeamValue> &sortedTeamValues) {
@@ -180,6 +183,7 @@ TeamValue getTeamResultFromString(const string &s, const string &pattern) {
 
 /**
  * Convert a map object to a list for easier processing of data later.
+ *
  * @param teamValuesMap
  * @return
  */
