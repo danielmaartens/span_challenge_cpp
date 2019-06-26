@@ -107,7 +107,7 @@ int booleanFromString(string s) {
 }
 
 /**
- * Check's if the file inputted by the user is valid/exists
+ * Checks if the file inputted by the user is valid/exists
  * @param name
  * @return
  */
