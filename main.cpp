@@ -357,7 +357,7 @@ list <TeamValue> getLeagueResults(const string file) {
     // Set the team ranks on the sorted data.
     setTeamRanks(finalTeamMatchPointsList);
 
-    return teamMatchPointsList;
+    return finalTeamMatchPointsList;
 }
 
 
@@ -389,7 +389,7 @@ private:
 public:
     explicit Print(int timeout) : initialDelay(timeout), runningDelay(timeout) {}
 
-    void delayed(string s) {
+    void withDelay(string s) {
         usleep(runningDelay);
         cout << s << '\n';
 
@@ -416,11 +416,11 @@ int main() {
     Print print = Print(900000);
 
     print.ln("\nWelcome to the League Rank Calculator !\n");
-    print.delayed("This program will calculate the ranking table for a soccer league.\n");
-    print.delayed("The data for the results of the games should be stored in a text file.");
+    print.withDelay("This program will calculate the ranking table for a soccer league.\n");
+    print.withDelay("The data for the results of the games should be stored in a text file.");
 
     while (running) {
-        print.delayed(
+        print.withDelay(
                 "\nPlease provide the full path of the file where your results are stored:\n\nFull File Path To Data: ");
         print.reset(0);
 
