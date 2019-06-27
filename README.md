@@ -10,7 +10,7 @@ soccer league.
 - g++
 
 ### NOTE:
-- Results of your soccer league must be in a file with the following structure.
+- Results of your soccer league must be in a file with the following structure:
 
 
 ```
